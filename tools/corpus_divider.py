@@ -22,11 +22,11 @@ def fileToString(filename):
 def splitCorpus(filename):
     f = fileToString(filename)
     tokens = [token for token in tokenizer.tokenize(f)]
-    print("File has",len(tokens),"words")
-    value = 60
+    # print("File has",len(tokens),"words")
+    value = 150
     # num = input("If you want "+str(value)+" words per text, enter "+str(len(tokens)//value)+". Please enter a number of files you want to create: ")
     num = len(tokens)//value
-    print("You've entered:",int(num))
+    # print("You've entered:",int(num))
     wordsperpart = len(tokens)//int(num)
 
     matching = [tokens.index(s) for s in tokens if "." in s]
@@ -39,15 +39,15 @@ def splitCorpus(filename):
     #     newDoc = Document()
     #     newDoc.add_paragraph(' '.join(res[n]))
     #     newDoc.save("file "+str(n+1)+".docx")
-    print("Created a CSV with",num,"rows.")
-    print("Approximate number of words in 1 row:",wordsperpart)
+    # print("Created a CSV with",num,"rows.")
+    # print("Approximate number of words in 1 row:",wordsperpart)
     return res
 
 # dir - path to the folder where are stored all files you need to put into csv; authorname must coincide with the filename; append = 'a' or 'w' depending if you want to create 1 file or append many texts into 1
 def createCSV(dir, authorname,append):
 
     texts = splitCorpus(dir+authorname+'.txt')
-    with open(os.path.basename(os.path.normpath(dir))+".csv",append, newline='') as f:
+    with open(os.path.abspath(os.path.join(os.getcwd()))+"/tools/corpus.csv",append, newline='') as f:
         thewriter = csv.writer(f)
 
         # thewriter.writerow(['author','text'])
@@ -84,8 +84,8 @@ def txtsToCsv(directoryname):
     authornames = [f[:-4] for f in os.listdir(dir) if f[-4:] == '.txt'] #creating the list of authornames based on file names without .txt
     authornames.sort()
     print("Folder contains ",len(authornames),"documents/authors.")
-    print("Authornames are:",*authornames,sep="\n")
-    with open(os.path.basename(os.path.normpath(directoryname))+".csv",'w',newline='') as f:
+    # print("Authornames are:",*authornames,sep="\n")
+    with open(os.path.abspath(os.path.join(os.getcwd()))+"/tools/corpus.csv",'w',newline='') as f:
         thewriter = csv.writer(f)
         thewriter.writerow(['author','text'])
     for author in authornames:
@@ -94,4 +94,5 @@ def txtsToCsv(directoryname):
     return 0
 
 "~/PycharmProjects/SVM/tools/"
-txtsToCsv(os.path.expanduser("~/PycharmProjects/SVM/corpus/"))
+path = os.path.abspath(os.path.join(os.getcwd(), os.pardir))
+# txtsToCsv(os.path.expanduser(path+"/corpus/"))

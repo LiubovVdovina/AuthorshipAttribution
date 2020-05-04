@@ -2,6 +2,7 @@ import glob
 import os
 import pandas as pd
 from normalizer import normalize, not_normalize
+from corpus_divider import txtsToCsv
 
 # from tools.stop_words import strip_stopwords
 
@@ -14,6 +15,8 @@ def get_normal_tokens(tokens_parsed=[]):
 
 
 def getData(force_reload = False) -> pd.DataFrame:
+
+    txtsToCsv(os.path.abspath(os.path.join(os.getcwd()))+"/corpus/")
     pickle_path = os.path.join(current_dir, 'blogs.pkl')
     pickle_exist = os.path.isfile(pickle_path)
 
