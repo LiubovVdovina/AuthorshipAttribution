@@ -13,7 +13,7 @@ def fileToString(filename):
         for para in doc.paragraphs:
             fullText.append(para.text)
     elif filename[-4:]=='.txt':
-        with open(filename) as f:
+        with open(filename,encoding='utf-8') as f:
             fullText.append(f.read())
     string = ' '.join(fullText)
     # print(string)
@@ -47,7 +47,7 @@ def splitCorpus(filename):
 def createCSV(dir, authorname,append):
 
     texts = splitCorpus(dir+authorname+'.txt')
-    with open(os.path.abspath(os.path.join(os.getcwd()))+"/tools/corpus.csv",append, newline='') as f:
+    with open(os.path.abspath(os.path.join(os.getcwd()))+"/tools/corpus.csv",append, newline='',encoding='utf-8') as f:
         thewriter = csv.writer(f)
 
         # thewriter.writerow(['author','text'])
@@ -59,7 +59,7 @@ def txtFoldersToString(directoryname):
 
     dir = glob(os.path.expanduser(directoryname)+"*/") #dir is a list with paths to all the subfolders of given directory
     dir.sort() #sort the paths in alphabetical order
-    with open(os.path.basename(os.path.normpath(directoryname))+".csv",'w',newline='') as f:
+    with open(os.path.basename(os.path.normpath(directoryname))+".csv",'w',newline='',encoding='utf-8') as f:
         thewriter = csv.writer(f)
         thewriter.writerow(['author','text'])
     for folder in dir:
@@ -69,9 +69,9 @@ def txtFoldersToString(directoryname):
         # print("Documents for folder",os.path.basename(os.path.normpath(folder)),"are",documents)
         contents = []
         for document in documents: #creating a list of texts of one folder
-            with open(folder+document+'.txt') as f:
+            with open(folder+document+'.txt',encoding='utf-8') as f:
                 contents.append(f.read())
-        with open(os.path.basename(os.path.normpath(directoryname))+".csv",'a',newline='') as f:
+        with open(os.path.basename(os.path.normpath(directoryname))+".csv",'a',newline='',encoding='utf-8') as f:
             thewriter = csv.writer(f)
             for i in range(len(contents)):
                 thewriter.writerow([authorname,contents[i]])
@@ -85,7 +85,7 @@ def txtsToCsv(directoryname):
     authornames.sort()
     print("Folder contains ",len(authornames),"documents/authors.")
     # print("Authornames are:",*authornames,sep="\n")
-    with open(os.path.abspath(os.path.join(os.getcwd()))+"/tools/corpus.csv",'w',newline='') as f:
+    with open(os.path.abspath(os.path.join(os.getcwd()))+"/tools/corpus.csv",'w',newline='',encoding='utf-8') as f:
         thewriter = csv.writer(f)
         thewriter.writerow(['author','text'])
     for author in authornames:
