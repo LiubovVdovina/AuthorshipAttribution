@@ -2,78 +2,71 @@ from sklearn import preprocessing
 from sklearn.model_selection import train_test_split
 from sklearn import svm
 from sklearn.metrics import classification_report
-from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
+from sklearn.model_selection import cross_val_score
+from scipy.sparse import coo_matrix
+from sklearn.pipeline import Pipeline, FeatureUnion
+import pandas as pd
+from normalizer import normalize, get_only_tokens, lemmatize
 
+from gensim.models import KeyedVectors
+from gensim.scripts.glove2word2vec import glove2word2vec
+
+from gensim.test.utils import datapath, get_tmpfile
 from tools.loader import getData
-
-RANDOM_STATE = 1500
+from features.punctuation import ColumnSelector, MeanEmbeddingVectorizer, TfidfEmbeddingVectorizer, count_punctuationMark, PunctuationTransformer
+from lexical_features import LexicalFeaturesTransformer, average_word_length
+from character_features import CharacterFeaturesTransformer, character_pipeline, count_character
 
 blogsDataFrame = getData(force_reload=False)
+#     print(blogsDataFrame)
+# define data set
+# X = blogsDataFrame['normal_tokens_as_string']
 
-# transform non-numerical labels to numerical labels
+# print(type(X), X.shape)
+#
+# # define labels set; transform non-numerical labels to numerical labels
 labelEncoder = preprocessing.LabelEncoder()
 y = labelEncoder \
     .fit(blogsDataFrame['author'].unique()) \
     .transform(blogsDataFrame['author'].values)
 
-
-# Split data set into training set and test set, ej. 20% training and 80% test
-X_train, X_test, y_train, y_test = train_test_split(blogsDataFrame['normal_tokens_as_string'], y, test_size=0.2,random_state=109, stratify=y)
-
-#Text char/word n-grams vectorization concerning their frequency
-# count_vect = CountVectorizer(lowercase='false',analyzer='char',ngram_range=(1,2))
-# X_train_charCounts = count_vect.fit_transform(X_train)
-# X_test_charCounts = count_vect.transform(X_test)
-
-# 1st - order the counts in descending order, then from this list, each feature name is extracted and returned with corresponding counts
-# sorted_items=sort_coo(X_train_charCounts[0].thisocoo())
-# feature_names=count_vect.get_feature_names()
-# n_grams=extract_topn_from_vector(feature_names,sorted_items,10)
-# print("Top n most frequent n-grams: ",n_grams)
-# print("Shape of count vector: (X - number of train docs and Y number of unique words/characters/n-grams: ",X_train_charCounts.shape)
-# print("Resulting vocabulary; the numbers are not counts, they are the position in the sparse vector: ",count_vect.vocabulary_)
-# print("Train count vectors for each document: ",X_train_charCounts.toarray())
-
-
-# Text tf-idf vectorization (weights concerning frequency of a token in one doc corresponding to frequency in all docs)
-tfidf_vect = TfidfVectorizer()
-tfidf_vect.fit(blogsDataFrame['normal_tokens_as_string'])
-X_train_tfidf = tfidf_vect.transform(X_train)
-X_test_tfidf = tfidf_vect.transform(X_test)
-
-# print("Type of X_train_tfidf is ", type(X_train_tfidf), "value of X_train_tfidf is ", X_train_tfidf)
-
-# OPTION #1 - Create a SVM Classifier
-svm_clf = svm.SVC(kernel='linear') # Linear Kernel
-
-#Train the model using the training sets
-svm_clf.fit(X_train_tfidf, y_train)
-
-#Predict the response for test dataset
-predictions_SVM = svm_clf.predict(X_test_tfidf)
-
-report = classification_report(y_test, predictions_SVM, target_names=labelEncoder.classes_, digits=5)
-print("Report for SVM Classifier:\n",report)
-
-# OPTION #2 create a NAIVE BAYES Classifier
-# naive_clf = naive_bayes.MultinomialNB()
-# # fit the training dataset on the Naive Bayes classifier
-# naive_clf.fit(X_train_tfidf, y_train)
+# training model
+# glove_file = '/Users/lyuba/PycharmProjects/SVM/glove.6B.100d.txt'
+# word2vec_glove_file = get_tmpfile("glove.6B.100d.word2vec.txt")
+# glove2word2vec(glove_file, word2vec_glove_file)
 #
-# # print("X_train_tfidf: ",X_train_tfidf)
-# # predict the labels on validation dataset
-# predictions_NB = naive_clf.predict(X_test_tfidf)
+# model = KeyedVectors.load_word2vec_format(word2vec_glove_file)
 #
-# # Use classification_report function to get the full report
-# report = classification_report(y_test, predictions_NB, target_names=labelEncoder.classes_, digits=5)
-# print("Report for Naive Bayes Classifier:\n",report)
+# w2v = dict(zip(model.wv.index2word, model.wv.syn0))
 
-# OPTION #3 create a Dummy Classifier sth is wrong - gives a warning
-# dummy_clf = DummyClassifier(strategy='uniform', random_state=RANDOM_STATE)
-# dummy_clf.fit(X_train_tfidf, y_train)
-# predictions_dummy = dummy_clf.predict(X_test_tfidf)
-# report = classification_report(y_test, predictions_dummy, target_names=labelEncoder.classes_, digits=5)
-# print("Report for a Dummy Classifier:\n",report)
+# pipeline = Pipeline([('extract_essays', ColumnSelector('normal_tokens')),("word2vec vectorizer", TfidfEmbeddingVectorizer(w2v)), ('classifier', svm.SVC(kernel='linear'))])
+# scores_pipe = cross_val_score(pipeline, blogsDataFrame, y, scoring='accuracy', cv=10)
+# mean_pipe_score = scores_pipe.mean()
+# print("Accuracy for pipeline:", mean_pipe_score)
+
+columns = ['no_punct_num_lowercase']
+# letters = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']
+print(blogsDataFrame.shape)
+pipe = Pipeline([('extract_essays', ColumnSelector(columns)),('character', LexicalFeaturesTransformer()), ('classifier', svm.SVC(kernel='linear'))])
+# pipe = Pipeline([('extract_essays', ColumnSelector(columns)),('character', CountVectorizer(analyzer='char',vocabulary='a',lowercase=True)), ('classifier', svm.SVC(kernel='linear'))])
+scores_pipe = cross_val_score(pipe, blogsDataFrame, y, scoring='accuracy', cv=10)
+mean_pipe_score = scores_pipe.mean()
+print("Accuracy for TT_RATIO:", mean_pipe_score)
+
+# scores_pipe = cross_val_score(character_pipeline, blogsDataFrame, y, scoring='accuracy', cv=10)
+# mean_pipe_score = scores_pipe.mean()
+# print("Accuracy for character features:", mean_pipe_score)
+
+# blogsDataFrame['average_word_length'] = blogsDataFrame['no_punct_num_lowercase'].apply(average_word_length)
+# blogsDataFrame['len'] = blogsDataFrame['text'].apply(len)
+# letters = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']
+# for letter in letters:
+#     blogsDataFrame[letter] = blogsDataFrame['text'].apply(count_character,character=letter)
 #
-# # OPTION #4 - LogisticRegression NOT FINISHED
-# log_clf = LogisticRegression()
+# X = blogsDataFrame.loc[:,['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']]
+# print(X,X.shape)
+# print(y.shape)
+# clf = svm.SVC(kernel='linear')
+#
+# print(cross_val_score(clf, X, y, cv=10, scoring="accuracy").mean())

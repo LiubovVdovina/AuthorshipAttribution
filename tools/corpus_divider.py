@@ -3,8 +3,10 @@ from nltk.tokenize import RegexpTokenizer
 import csv
 import os
 from glob import glob
-
+from normalizer import remove_punctuation_numbers_case
 tokenizer = RegexpTokenizer('\S+')
+
+
 
 def fileToString(filename):
     fullText = []
@@ -23,17 +25,20 @@ def splitCorpus(filename):
     f = fileToString(filename)
     tokens = [token for token in tokenizer.tokenize(f)]
     # print("File has",len(tokens),"words")
-    value = 150
+    value = 200
     # num = input("If you want "+str(value)+" words per text, enter "+str(len(tokens)//value)+". Please enter a number of files you want to create: ")
-    num = len(tokens)//value
+    # num = len(tokens)//value
     # print("You've entered:",int(num))
-    wordsperpart = len(tokens)//int(num)
+    # wordsperpart = len(tokens)//int(num)
 
-    matching = [tokens.index(s) for s in tokens if "." in s]
-    splitlist = [min(matching, key=lambda x:abs(x-wordsperpart*n))+1 for n in range(1,int(num))]
-    res = [tokens[i : j] for i, j in zip([0] +
-                                    splitlist, splitlist + [None])]
+    #separating by dots
+    # matching = [tokens.index(s) for s in tokens if "." in s]
+    # splitlist = [min(matching, key=lambda x:abs(x-wordsperpart*n))+1 for n in range(1,int(num))]
+    # res = [tokens[i : j] for i, j in zip([0] +
+    #                                 splitlist, splitlist + [None])]
 
+    #separating  only by words
+    res = [tokens[i:i + value] for i in range(0, len(tokens), value)]
     # uncomment if you want to write separated texts into separated docx files
     # for n in range(num):
     #     newDoc = Document()
@@ -41,7 +46,7 @@ def splitCorpus(filename):
     #     newDoc.save("file "+str(n+1)+".docx")
     # print("Created a CSV with",num,"rows.")
     # print("Approximate number of words in 1 row:",wordsperpart)
-    return res
+    return res[:-1]
 
 # dir - path to the folder where are stored all files you need to put into csv; authorname must coincide with the filename; append = 'a' or 'w' depending if you want to create 1 file or append many texts into 1
 def createCSV(dir, authorname,append):
@@ -93,6 +98,18 @@ def txtsToCsv(directoryname):
 
     return 0
 
-"~/PycharmProjects/SVM/tools/"
-path = os.path.abspath(os.path.join(os.getcwd(), os.pardir))
-# txtsToCsv(os.path.expanduser(path+"/corpus/"))
+def make_df_csv():
+    corpus_dir = "/Users/lyuba/PycharmProjects/SVM/corpus/"
+    authors = [f for f in os.listdir(corpus_dir)] #creating a list of txt filenames in the current folder
+    authors.sort() #sort the file names in alphabetical order
+    with open("/Users/lyuba/PycharmProjects/SVM/united_corpus.csv",'w',newline='',encoding='utf-8') as f:
+        thewriter = csv.writer(f)
+        thewriter.writerow(['author','text'])
+    for author in authors:
+        text = open("/Users/lyuba/PycharmProjects/SVM/corpus/"+author).read()
+        text = remove_punctuation_numbers_case(text)
+        with open("/Users/lyuba/PycharmProjects/SVM/united_corpus.csv",'a', newline='',encoding='utf-8') as f:
+            thewriter = csv.writer(f)
+            thewriter.writerow([author,text])
+
+    return 0
